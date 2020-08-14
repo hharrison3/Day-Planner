@@ -1,23 +1,19 @@
 $(document).ready(function() {
-
-
-// each save button should save content to the console log so it shows up
-// on the screen when refreshed
+// NEED TO: add a clear button
+// grab date from moments and append to header
 const currentTime = moment().format("dddd, MMMM Do");
 $('#currentDay').text(currentTime);
-// each time slot imput box turns gray when the hour passes, red for current hour,
-// and green for upcoming hours
-
-// when day is over, planner gets cleared
-
 const $container = $('.container');
+// for loop dynamically adding rows of div's for each work hour
 for (let i= 0; i<=8; i++) {
     let hour = (i + 9);
     let ampm = "am";
     let momentHour = (i+9);
+    // swich value of ampm once it is 12pm
     if (hour > 11) {
         ampm = "pm";
     }
+    // once it is past 12, set hour back to 1 to avoid millitary time
     if (hour > 12) {
         hour = hour - 12;
     }
@@ -47,8 +43,7 @@ for (let i= 0; i<=8; i++) {
     });
     $activityDiv.addClass('col-md-8');
     $activityDiv.attr('hour', momentHour);
-
-    //add class present if momentHour === moment().hour()
+    //add class past, present, or future depending on the time of day
     if (momentHour === moment().hour()) {
         $activityDiv.addClass('present');
     }
@@ -58,7 +53,6 @@ for (let i= 0; i<=8; i++) {
     if (momentHour > moment().hour()) {
         $activityDiv.addClass('future');
     }
-
     $parentContainer.append($activityDiv);
     //end of activity section
     //create section for save button
@@ -71,8 +65,7 @@ for (let i= 0; i<=8; i++) {
     $saveDiv.addClass('col-md-2');
     $parentContainer.append($saveDiv);
     //end of save button section
-    
-    //input box for user added to activity div
+    //text box for user added to activity div
     $activityText = $('<textarea>');
     $activityText.text('');
     $activityText.addClass('textarea');
@@ -91,27 +84,21 @@ for (let i= 0; i<=8; i++) {
     $savebtn.attr('save-num', i);
     $saveDiv.append($savebtn);
 }
+// run set activities function to set any saved activities to its corresponding hour
 setActivities();
-
+// add clear button to page
+clearButton();
 //saves user input to array stored in local storage
 function saveInput(event) {
     event.preventDefault();
-    // let corrIndex = $(this).attr('save-num');
-
-    // let inputid = '.inputindex-'+ corrIndex;
-    // let textVal = $(inputid).val();
-    // activityArray[corrIndex] = textVal;
-    // console.log(activityArray);
-
+    // initialize variable to store array
     var arrayTimeObj;
+    // set variable to array from local storage if one exists, else set to empty array
     if (localStorage.getItem("activities")) {
         arrayTimeObj = JSON.parse(localStorage.getItem("activities"));
     } else {
         arrayTimeObj = [];
     }
-
-    //intialize the array of obj where we will store time: value pairs if array does not exist
-
     //event.target click --- get time and value obj
     const time = $(event.target).closest(".parentContainer").find(".col-md-8").attr("hour");
     const value = $(event.target).closest(".parentContainer").find(".textarea").val();
@@ -121,19 +108,38 @@ function saveInput(event) {
     arrayTimeObj.push(newObj)
     //set item
     localStorage.setItem('activities', JSON.stringify(arrayTimeObj));
+    //reload page
     window.location.reload(true);
 }
-// another function to loop through and set values 
+// function to loop through stored array and set values to each hour, if one exists
 function setActivities() {
     if (localStorage.getItem('activities')){
         const arr = JSON.parse(localStorage.getItem('activities'))
         for (let i=0; i < arr.length;i++) {
+            // use time value in object to target text box for corresponding time
             let $divIndex = arr[i].time;
+            // set text box to value that was saved by user
             $(`.divhour${$divIndex}`).text(arr[i].value);
-
         }
     }
 }
-
+// creates clear button and appends to page
+function clearButton() {
+    const $clearbtn = $('<button>');
+    $clearbtn.text('Clear Schedule');
+    $clearbtn.addClass('btn btn-danger')
+    $clearbtn.css({
+        'height': '80px',
+        'border': '1px solid black',
+    });
+    $container.append($clearbtn);
+}
+// resets the page and clears local storage, then refreshes with an empty schedule
+function clearSchedule() {
+    $container.text('');
+    localStorage.removeItem('activities')
+    window.location.reload(true);
+}
+$(document).on('click', '.btn-danger',clearSchedule);
 $(document).on('click', 'button',saveInput);
 });
